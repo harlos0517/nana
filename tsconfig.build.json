@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": false,
+    "noEmit": false,
+    "incremental": false,
+    "baseUrl": ".",
+    "outDir": "./dist"
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.d.ts",
+  ],
+  "exclude": [
+    "node_modules",
+    "test",
+    "dist",
+    "*.config.*",
+    "*.spec.*"
+  ],
+}
