@@ -3,9 +3,8 @@ export class NanaError extends Error {
     super(description)
     Object.setPrototypeOf(this, NanaError.prototype)
     this.status = status
-    this.description = description
+    this.message = description || 'Unknown NanaError'
   }
 
   status: number
-  description: string | undefined
 }

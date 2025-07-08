@@ -1,6 +1,7 @@
 import request from 'supertest'
 import { describe, expect, it } from 'vitest'
 
+import { NanaError } from '@/NanaError'
 import { NanaMiddleware } from '@/NanaMiddleware'
 import { NanaServerApp } from '@/NanaServerApp'
 
@@ -31,5 +32,20 @@ describe('Nana Framework Basic Tests', () => {
       .expect(200)
 
     expect(response.body).toEqual({ user: 123 })
+  })
+
+  it('should throw error', async() => {
+    const app = new NanaServerApp({ port: 3000 })
+
+    app.get('/error', () => {
+      throw new NanaError(500, 'Test Error')
+    })
+
+    const response = await request(app.app)
+      .get('/error')
+      .expect(500)
+
+    console.log(response)
+    expect(response.body.error).toEqual('Test Error')
   })
 })
