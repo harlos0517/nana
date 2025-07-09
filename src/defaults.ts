@@ -1,14 +1,15 @@
 
 import { NanaError } from '@/NanaError'
-import { BaseCTX, NanaAction, NanaErrorHandler } from './types'
+import { BaseCTX, NanaAction, NanaErrorHandler, NanaTransformer } from './types'
 
 const DEV = process.env.NODE_ENV !== 'production'
 
 export const defaultAction: NanaAction<BaseCTX> =
   ({ data, res }) => {
-    res.locals.body = data
     res.status(200).send(data)
   }
+
+export const defaultTransformer: NanaTransformer<BaseCTX> = data => data
 
 export const defaultErrorHandler: NanaErrorHandler<BaseCTX> =
   (err, { res }, errorLogger = console.error) => {
@@ -23,11 +24,3 @@ export const defaultErrorHandler: NanaErrorHandler<BaseCTX> =
       errorLogger(err)
     }
   }
-
-export const combineActions = <ChildCTX extends ParentCTX, ParentCTX extends BaseCTX>(
-  childAction: NanaAction<ChildCTX>,
-  parentAction: NanaAction<ParentCTX>,
-): NanaAction<ChildCTX> => async ctx => {
-  await childAction(ctx)
-  await parentAction(ctx)
-}

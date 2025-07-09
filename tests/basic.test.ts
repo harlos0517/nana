@@ -1,51 +1,34 @@
-import request from 'supertest'
-import { describe, expect, it } from 'vitest'
+import { describe, it } from 'vitest'
+import { testNana } from './util'
 
 import { NanaError } from '@/NanaError'
 import { NanaMiddleware } from '@/NanaMiddleware'
-import { NanaServerApp } from '@/NanaServerApp'
+import { NanaServer } from '@/NanaServer'
+import { GET } from '@/types'
 
 describe('Nana Framework Basic Tests', () => {
   it('should handle basic GET request', async() => {
-    const app = new NanaServerApp({ port: 3000 })
-
+    const app = new NanaServer({ port: 3000 })
     app.get('/hello', () => ({ message: 'Hello World' }))
-    const response = await request(app.app)
-      .get('/hello')
-      .expect(200)
 
-    expect(response.body).toEqual({ message: 'Hello World' })
+    testNana(app, GET, '/hello', 200, { message: 'Hello World' })
   })
 
   it('should handle middleware context passing', async() => {
-    const app = new NanaServerApp({ port: 3000 })
-
+    const app = new NanaServer({ port: 3000 })
     const router = app.use<{ userId: number }>('/api')
     router.use(new NanaMiddleware<{ userId: number }>(() => ({ userId: 123 })))
-
     router.get('/user', ({ userId }) => {
       return { user: userId || 'no-user' }
     })
 
-    const response = await request(app.app)
-      .get('/api/user')
-      .expect(200)
-
-    expect(response.body).toEqual({ user: 123 })
+    testNana(app, GET, '/api/user', 200, { user: 123 })
   })
 
   it('should throw error', async() => {
-    const app = new NanaServerApp({ port: 3000 })
+    const app = new NanaServer({ port: 3000 })
+    app.get('/error', () => { throw new NanaError(500, 'Test Error') })
 
-    app.get('/error', () => {
-      throw new NanaError(500, 'Test Error')
-    })
-
-    const response = await request(app.app)
-      .get('/error')
-      .expect(500)
-
-    console.log(response)
-    expect(response.body.error).toEqual('Test Error')
+    testNana(app, GET, '/error', 500, { error: 'Test Error' })
   })
 })

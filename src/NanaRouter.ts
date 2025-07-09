@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router as ExpressRouter } from 'express'
 
-import { combineActions, defaultAction, defaultErrorHandler } from '@/defaults'
+import { defaultAction, defaultErrorHandler, defaultTransformer } from '@/defaults'
 import { NanaController } from '@/NanaController'
 import { NanaMiddleware } from '@/NanaMiddleware'
 import {
@@ -13,70 +13,74 @@ import {
   METHOD,
   NanaAction,
   NanaErrorHandler,
+  NanaTransformer,
   Obj,
 } from '@/types'
+import { routeChecker } from '@/util'
 
 export class NanaRouter<
   NewCTX extends Obj = Empty,
+  Data = any,
   _ParentCTX extends BaseCTX = BaseCTX,
-  _CTX extends _ParentCTX & NewCTX = _ParentCTX & NewCTX,
+  _ParentData = Data,
+  __CTX extends _ParentCTX & NewCTX = _ParentCTX & NewCTX,
 > {
-  public readonly parent?: NanaRouter<any, any, _ParentCTX> | ExpressRouter
-  public readonly router: ExpressRouter = ExpressRouter()
-  public readonly route: string
-  public action: NanaAction<_CTX>
-  public errorHandler: NanaErrorHandler<_CTX>
-  public readonly subRouters: Record<string, NanaRouter<any, _CTX> | NanaController<_CTX> | ExpressRouter> = {}
+  public parent?: NanaRouter<any, _ParentData, any, any, _ParentCTX> | ExpressRouter
+  public route: string
+  public readonly expressRouter: ExpressRouter = ExpressRouter()
+  public readonly action: NanaAction<__CTX, Data>
+  public readonly transformer: NanaTransformer<__CTX, _ParentData, Data>
+  public readonly errorHandler: NanaErrorHandler<__CTX>
+  public readonly children: Record<string, NanaRouter<any, any, __CTX, Data, any> | NanaController<__CTX, Data> | ExpressRouter> = {}
 
   constructor(
     route?: string,
-    parent?: NanaRouter<any, any, _ParentCTX> | ExpressRouter,
-    controllerAction?: NanaAction<_CTX>,
-    errorHandler?: NanaErrorHandler<_CTX>,
+    parent?: typeof this.parent,
+    action?: typeof this.action,
+    transformer?: typeof this.transformer,
+    errorHandler?: typeof this.errorHandler,
   ) {
-    this.route = route || '/'
+    this.route = routeChecker(route || '')
     this.parent = parent
     if (parent instanceof NanaRouter) {
-      if (parent.subRouters[this.route])
+      if (parent.children[this.route])
         throw new Error(`Route "${this.route}" already exists in parent router.`)
-      parent.subRouters[this.route] = this
-      parent.router.use(this.route, this.router)
-      this.action = combineActions<_CTX, _ParentCTX>(
-        controllerAction || (() => void 0),
-        parent.action,
-      )
+      parent.children[this.route] = this
+      parent.expressRouter.use(this.route, this.expressRouter)
+      this.action = action || ((data, ctx) => parent.action(data as any, ctx)) as NanaAction<__CTX, Data>
+      this.transformer = transformer
+        ? async(data, ctx) => transformer(await parent.transformer(data, ctx), ctx)
+        : ((data, ctx) => parent.transformer(data, ctx)) as NanaTransformer<__CTX, _ParentData, Data>
       this.errorHandler = errorHandler || parent.errorHandler
     } else {
-      parent?.use(this.route, this.router)
-      this.action = controllerAction || defaultAction
+      parent?.use(this.route, this.expressRouter)
+      this.action = action || defaultAction
+      this.transformer = transformer || defaultTransformer
       this.errorHandler = errorHandler || defaultErrorHandler
     }
   }
 
-  use<NewCTX extends Obj = Empty>(_router: ExpressRouter): void
-  use<NewCTX extends Obj = Empty>(_routeName: string): NanaRouter<NewCTX, _CTX>
-  use<NewCTX extends Obj = Empty>(_routeName: string, _router: ExpressRouter): void
-  use<NewCTX extends Obj = Empty>(_routeName: string, _router: NanaRouter<NewCTX, _CTX>): void
+  use<ChildNewCTX extends Obj = Empty>(_routeName: string): NanaRouter<ChildNewCTX, any, __CTX, Data>
+  use<ChildNewCTX extends Obj = Empty>(_routeName: string, _router: ExpressRouter): void
+  use<ChildNewCTX extends Obj = Empty>(_routeName: string, _router: NanaRouter<ChildNewCTX, any, __CTX, Data>): void
   use<_, ThisCTX extends Partial<NewCTX> = NewCTX>(_middleware: NanaMiddleware<ThisCTX, _ParentCTX>): void
-  use<NewCTX extends Obj = Empty, ThisCTX extends Partial<_CTX> & BaseCTX = _CTX & BaseCTX>(...args: any[]) {
-    let routeName: string
-    let rest: any[]
-    let toMount: NanaRouter<NewCTX, _CTX> | ExpressRouter | NanaMiddleware<ThisCTX, _ParentCTX> | undefined
-    if (typeof args[0] === 'string') {
-      ;[routeName, toMount, ...rest] = args
-    } else {
-      ;[toMount, ...rest] = args
-      routeName = '/'
-    }
+  use<ChildNewCTX extends Obj = Empty>(_router: ExpressRouter): void
+  use<ChildNewCTX extends Obj = Empty, ThisCTX extends Partial<NewCTX> = NewCTX>(
+    ...args: [string] | [string, NanaRouter<ChildNewCTX, any, __CTX, Data> | ExpressRouter]
+      | [NanaMiddleware<ThisCTX, _ParentCTX> | ExpressRouter]
+  ) {
+    const [routeName, toMount] = typeof args[0] === 'string' ? [args[0], args[1]] : ['/', args[0]]
+    const route = routeChecker(routeName)
     if (toMount instanceof NanaRouter) {
-      const subRouter = toMount
-      this.router.use(routeName, toMount.router)
-      this.subRouters[routeName] = toMount
-      subRouter.action = combineActions(
-        this.action,
-        subRouter.action,
-      )
-      subRouter.errorHandler = subRouter.errorHandler || this.errorHandler
+      if (this.children[route])
+        throw new Error(`Route "${this.route}" already exists in parent router.`)
+      this.expressRouter.use(route, toMount.expressRouter)
+      this.children[route] = toMount
+      toMount.parent = this
+      toMount.route = route
+    } else if (toMount instanceof NanaMiddleware) {
+      const middleware = toMount as NanaMiddleware<ThisCTX, _ParentCTX>
+      this.expressRouter.use(middleware.handler)
     } else if (toMount instanceof ExpressRouter) {
       const expressRouter = toMount as ExpressRouter
       expressRouter.use(async(req, res, next) => {
@@ -84,53 +88,49 @@ export class NanaRouter<
           if (!req.ctx) req.ctx = {}
           await next()
         } catch(err) {
-          await this.errorHandler(err, { ...req.ctx as _CTX, req, res })
+          await this.errorHandler(err, { ...req.ctx as __CTX, req, res })
         }
       })
-      this.router.use(routeName, expressRouter)
-      this.subRouters[routeName] = expressRouter
+      this.expressRouter.use(route, expressRouter)
+      this.children[route] = expressRouter
       return toMount
-    } else if (toMount instanceof NanaMiddleware) {
-      const middleware = toMount as NanaMiddleware<ThisCTX, _ParentCTX>
-      this.router.use(middleware.handler)
     } else {
-      const router = new NanaRouter<NewCTX, _CTX>(routeName, this)
-      this.router.use(routeName, router.router)
-      this.subRouters[routeName] = router
+      const router = new NanaRouter<ChildNewCTX, any, __CTX, Data>(route, this)
+      this.expressRouter.use(route, router.expressRouter)
+      this.children[route] = router
       return router
     }
   }
 
-  private _createController<NewCTX extends Obj = Empty>(
-    method: METHOD,
-    ...args: ControllerArgs<NewCTX & _CTX>
-  ) { return new NanaController<NewCTX & _CTX>(this, method, ...args) }
-
-  get<NewCTX extends Obj = Empty>(...args: ControllerArgs<NewCTX & _CTX>) {
-    return this._createController<NewCTX>(METHOD.GET, ...args)
+  private _createController(method: METHOD, ...args: ControllerArgs<__CTX, Data>) {
+    return new NanaController<__CTX, Data>(this, method, ...args)
   }
 
-  post<NewCTX extends Obj = Empty>(...args: ControllerArgs<NewCTX & _CTX>) {
-    return this._createController<NewCTX>(METHOD.POST, ...args)
+  get(...args: ControllerArgs<__CTX, Data>) {
+    return this._createController(METHOD.GET, ...args)
   }
 
-  put<NewCTX extends Obj = Empty>(...args: ControllerArgs<NewCTX & _CTX>) {
-    return this._createController<NewCTX>(METHOD.PUT, ...args)
+  post(...args: ControllerArgs<__CTX, Data>) {
+    return this._createController(METHOD.POST, ...args)
   }
 
-  delete<NewCTX extends Obj = Empty>(...args: ControllerArgs<NewCTX & _CTX>) {
-    return this._createController<NewCTX>(METHOD.DELETE, ...args)
+  put(...args: ControllerArgs<__CTX, Data>) {
+    return this._createController(METHOD.PUT, ...args)
   }
 
-  patch<NewCTX extends Obj = Empty>(...args: ControllerArgs<NewCTX & _CTX>) {
-    return this._createController<NewCTX>(METHOD.PATCH, ...args)
+  delete(...args: ControllerArgs<__CTX, Data>) {
+    return this._createController(METHOD.DELETE, ...args)
   }
 
-  options<NewCTX extends Obj = Empty>(...args: ControllerArgs<NewCTX & _CTX>) {
-    return this._createController<NewCTX>(METHOD.OPTIONS, ...args)
+  patch(...args: ControllerArgs<__CTX, Data>) {
+    return this._createController(METHOD.PATCH, ...args)
   }
 
-  head<NewCTX extends Obj = Empty>(...args: ControllerArgs<NewCTX & _CTX>) {
-    return this._createController<NewCTX>(METHOD.HEAD, ...args)
+  options(...args: ControllerArgs<__CTX, Data>) {
+    return this._createController(METHOD.OPTIONS, ...args)
+  }
+
+  head(...args: ControllerArgs<__CTX, Data>) {
+    return this._createController(METHOD.HEAD, ...args)
   }
 }
