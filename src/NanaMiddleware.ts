@@ -21,7 +21,7 @@ export class NanaMiddleware<
   _ParentCTX extends BaseCTX = BaseCTX,
   _CTX extends NewCTX & _ParentCTX = NewCTX & _ParentCTX,
 > {
-  public readonly getContext: NanaMiddlewareCreateContext<NewCTX, _ParentCTX> = _ => ({} as NewCTX)
+  public readonly getContext: NanaMiddlewareCreateContext<NewCTX, _ParentCTX>
   public readonly postHandler?: NanaPostHandler<_CTX>
   public readonly errorHandler: NanaErrorHandler<_CTX>
 
@@ -31,8 +31,7 @@ export class NanaMiddleware<
     next: ExpressNext,
   ) => {
     try {
-      if (!req.ctx) req.ctx = {}
-      const newCtx = await this.getContext?.({ ...req.ctx as _ParentCTX, req, res }) || {}
+      const newCtx = await this.getContext({ ...req.ctx as _ParentCTX, req, res })
       Object.assign(req.ctx, newCtx)
       next()
       this.postHandler?.({ ...req.ctx as _CTX, req, res })
@@ -47,7 +46,7 @@ export class NanaMiddleware<
     postHandler?: NanaPostHandler<_CTX>,
   ) {
     this.getContext = getContext
-    this.postHandler = postHandler
     this.errorHandler = errorHandler
+    this.postHandler = postHandler
   }
 }

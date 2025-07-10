@@ -1,18 +1,25 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { dryRun } from '~/tests/util'
 
 import { NanaServer } from '@/NanaServer'
 
 describe('NanaServerApp', () => {
   it('should use default port', async() => {
-    const app = new NanaServer()
-    dryRun(app)
-    expect(app.expressApp.listen).toBeCalledWith(7777, expect.any(Function))
+    const server = new NanaServer()
+    await dryRun(server)
+    expect(server.expressApp.listen).toBeCalledWith(7777, expect.any(Function))
   })
 
   it('should use specified port', async() => {
-    const app = new NanaServer({ port: 8888 })
-    dryRun(app)
-    expect(app.expressApp.listen).toBeCalledWith(8888, expect.any(Function))
+    const server = new NanaServer({ port: 8888 })
+    await dryRun(server)
+    expect(server.expressApp.listen).toBeCalledWith(8888, expect.any(Function))
+  })
+
+  it('should call onStart', async() => {
+    const onStart = vi.fn()
+    const server = new NanaServer({ onStart })
+    await dryRun(server)
+    expect(onStart).toHaveBeenCalledOnce()
   })
 })

@@ -5,9 +5,7 @@ import { BaseCTX, NanaAction, NanaErrorHandler, NanaTransformer } from './types'
 const DEV = process.env.NODE_ENV !== 'production'
 
 export const defaultAction: NanaAction<BaseCTX> =
-  ({ data, res }) => {
-    res.status(200).send(data)
-  }
+  (data, { res }) => { res.status(200).send(data) }
 
 export const defaultTransformer: NanaTransformer<BaseCTX> = data => data
 
