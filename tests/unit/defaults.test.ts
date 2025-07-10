@@ -1,0 +1,94 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { describe, expect, it, vi } from 'vitest'
+
+import { defaultAction, defaultTransformer } from '@/defaults'
+import { BaseCTX } from '@/types'
+import { testCtx, testData } from '~/tests/util'
+
+describe('defaults', () => {
+  it('defaultAction', async() => {
+    const dummyRes = {
+      status: vi.fn().mockReturnThis(),
+      send: vi.fn(),
+    }
+
+    defaultAction(testData, { res: dummyRes as any } as BaseCTX)
+    expect(dummyRes.status).toBeCalledWith(200)
+    expect(dummyRes.send).toBeCalledWith(testData)
+  })
+
+  it('defaultTransformer', async() => {
+    const transformedData = defaultTransformer(testData, testCtx)
+    expect(transformedData).toEqual(testData)
+  })
+
+  describe.sequential('defaultErrorHandler', async() => {
+    const testError = async(
+      env: string,
+      errorType: string,
+      expectedStatus: number,
+      expectedMessage: string,
+    ) => {
+      vi.stubEnv('NODE_ENV', env)
+      vi.resetModules()
+
+      const { defaultErrorHandler, NODE_ENV } = await import('@/defaults')
+      const { NanaError } = await import('@/NanaError')
+
+      const error = errorType === 'NanaError' ? new NanaError(418, 'I\'m a teapot') :
+        errorType === 'Error' ? new Error('I\'m a teapot') : 'I\'m a teapot'
+
+      const dummyRes = {
+        status: vi.fn().mockReturnThis(),
+        send: vi.fn(),
+      }
+
+      const errorLogger = vi.fn()
+      console.log(env, process.env.NODE_ENV, NODE_ENV)
+      await defaultErrorHandler(error, { res: dummyRes as any } as BaseCTX, errorLogger)
+      expect(dummyRes.status).toBeCalledWith(expectedStatus)
+      expect(dummyRes.send).toBeCalledWith({ error: expectedMessage })
+      expect(errorLogger).toBeCalledWith(error)
+
+      vi.unstubAllEnvs()
+    }
+
+    it('with NanaError in production', async() => {
+      await testError('production', 'NanaError', 418, 'I\'m a teapot')
+    })
+
+    it('with NanaError in development', async() => {
+      await testError('development', 'NanaError', 418, 'I\'m a teapot')
+    })
+
+    it('with Error in production', async() => {
+      await testError('production', 'Error', 500, 'Unknown Error')
+    })
+
+    it('with Error in development', async() => {
+      await testError('development', 'Error', 500, 'I\'m a teapot')
+    })
+
+    it('with string in production', async() => {
+      await testError('production', 'I\'m a teapot', 500, 'Unknown Error')
+    })
+
+    it('with string in development', async() => {
+      await testError('development', 'I\'m a teapot', 500, 'I\'m a teapot')
+    })
+
+    it('should throw error if res.send fails', async() => {
+      vi.stubEnv('NODE_ENV', 'development')
+      const { defaultErrorHandler } = await import('@/defaults')
+      const sendError = new Error('Send failed')
+      const dummyRes = {
+        status: vi.fn().mockReturnThis(),
+        send: vi.fn(() => { throw sendError }),
+      }
+
+      const errorLogger = vi.fn()
+      defaultErrorHandler(new Error(), { res: dummyRes as any } as BaseCTX, errorLogger)
+      expect(errorLogger).toBeCalledWith(sendError)
+    })
+  })
+})

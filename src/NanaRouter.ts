@@ -32,10 +32,10 @@ export class NanaRouter<
   public errorHandler?: NanaErrorHandler<__CTX>
   public readonly children: Record<string, NanaRouter<any, any, __CTX, Data, any> | NanaController<__CTX, any, Data> | ExpressRouter> = {}
 
-  readonly _transformer: NanaTransformer<__CTX, _ParentData, Data> = async(data, ctx) =>
+  readonly _transformer: NanaTransformer<__CTX, Data> = async<Result = any>(data: Result, ctx: __CTX) =>
     this.parent instanceof NanaRouter
-      ? this.transformer(await this.parent._transformer(data, ctx), ctx)
-      : this.transformer(data, ctx)
+      ? this.transformer(await this.parent._transformer(data as any, ctx), ctx)
+      : this.transformer(data as any, ctx)
 
   constructor(
     action?: typeof this.action,
@@ -81,41 +81,47 @@ export class NanaRouter<
     }
   }
 
-  private _createController(method: METHOD, route: string, handler: NanaControllerHandler<__CTX, Data>) {
+  private _createController<Result = any>(
+    method: METHOD,
+    route: string,
+    handler: NanaControllerHandler<__CTX, Result> | NanaController<__CTX, Result, Data>,
+  ) {
     route = routeChecker(route)
-    const controller = new NanaController<__CTX, any, Data>(handler)
+    const controller = handler instanceof NanaController
+      ? handler : new NanaController<__CTX, Result, Data>(handler)
     controller.action ||= this.action || defaultAction
     controller.errorHandler ||= this.errorHandler || defaultErrorHandler
+    controller.transformer = (data: Result, ctx: __CTX) => this._transformer(data as any, ctx)
     this.children[route] = controller
     this.expressRouter[method](route, controller._handler)
     return controller
   }
 
-  get(route: string, handler: NanaControllerHandler<__CTX, Data>) {
+  get(route: string, handler: NanaControllerHandler<__CTX, Data> | NanaController<__CTX, any, Data>) {
     return this._createController(METHOD.GET, route, handler)
   }
 
-  post(route: string, handler: NanaControllerHandler<__CTX, Data>) {
+  post(route: string, handler: NanaControllerHandler<__CTX, Data> | NanaController<__CTX, any, Data>) {
     return this._createController(METHOD.POST, route, handler)
   }
 
-  put(route: string, handler: NanaControllerHandler<__CTX, Data>) {
+  put(route: string, handler: NanaControllerHandler<__CTX, Data> | NanaController<__CTX, any, Data>) {
     return this._createController(METHOD.PUT, route, handler)
   }
 
-  delete(route: string, handler: NanaControllerHandler<__CTX, Data>) {
+  delete(route: string, handler: NanaControllerHandler<__CTX, Data> | NanaController<__CTX, any, Data>) {
     return this._createController(METHOD.DELETE, route, handler)
   }
 
-  patch(route: string, handler: NanaControllerHandler<__CTX, Data>) {
+  patch(route: string, handler: NanaControllerHandler<__CTX, Data> | NanaController<__CTX, any, Data>) {
     return this._createController(METHOD.PATCH, route, handler)
   }
 
-  options(route: string, handler: NanaControllerHandler<__CTX, Data>) {
+  options(route: string, handler: NanaControllerHandler<__CTX, Data> | NanaController<__CTX, any, Data>) {
     return this._createController(METHOD.OPTIONS, route, handler)
   }
 
-  head(route: string, handler: NanaControllerHandler<__CTX, Data>) {
+  head(route: string, handler: NanaControllerHandler<__CTX, Data> | NanaController<__CTX, any, Data>) {
     return this._createController(METHOD.HEAD, route, handler)
   }
 }

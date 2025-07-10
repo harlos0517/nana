@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import { defaultTransformer } from '@/defaults'
+import { NanaController } from '@/NanaController'
 import { NanaMiddleware } from '@/NanaMiddleware'
 import { NanaRouter } from '@/NanaRouter'
 import { METHOD } from '@/types'
@@ -66,7 +67,7 @@ describe('NanaRouter', () => {
       expect(() => parent.use('illegal/route', child)).toThrow(Error)
     })
 
-    it('should throw error if route is illegal (illegal character', async() => {
+    it('should throw error if route is illegal (illegal character)', async() => {
       const parent = new NanaRouter()
       const child = new NanaRouter()
 
@@ -82,14 +83,38 @@ describe('NanaRouter', () => {
     })
   })
 
-  describe('methods', async() => {
+  describe('methods with handler', async() => {
     const testMethod = (method: METHOD) => {
       const parent = new NanaRouter()
       parent.expressRouter[method] = vi.fn()
-      const controller = parent[method]('/test', vi.fn())
+      const dummyHandler = vi.fn()
+      const controller = parent[method]('/test', dummyHandler)
 
       expect(parent.children['/test']).toBe(controller)
       expect(parent.expressRouter[method]).toBeCalledWith('/test', controller._handler)
+      expect(controller.handler).toBe(dummyHandler)
+    }
+
+    it('get', async() => { testMethod(METHOD.GET) })
+    it('post', async() => { testMethod(METHOD.POST) })
+    it('put', async() => { testMethod(METHOD.PUT) })
+    it('delete', async() => { testMethod(METHOD.DELETE) })
+    it('patch', async() => { testMethod(METHOD.PATCH) })
+    it('options', async() => { testMethod(METHOD.OPTIONS) })
+    it('head', async() => { testMethod(METHOD.HEAD) })
+  })
+
+  describe('methods with controller', async() => {
+    const testMethod = (method: METHOD) => {
+      const parent = new NanaRouter()
+      parent.expressRouter[method] = vi.fn()
+      const dummyHandler = vi.fn()
+      const controller = new NanaController(dummyHandler)
+      parent[method]('/test', controller)
+
+      expect(parent.children['/test']).toBe(controller)
+      expect(parent.expressRouter[method]).toBeCalledWith('/test', controller._handler)
+      expect(controller.handler).toBe(dummyHandler)
     }
 
     it('get', async() => { testMethod(METHOD.GET) })

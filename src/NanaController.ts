@@ -17,13 +17,13 @@ export class NanaController<CTX extends BaseCTX = BaseCTX, Result = any, Data = 
   public handler: NanaControllerHandler<CTX, Result>
   public action?: NanaAction<CTX, Data>
   public errorHandler?: NanaErrorHandler<CTX>
-  public transformer: NanaTransformer<CTX, Result, Data>
+  public transformer?: NanaTransformer<CTX, Result, Data>
 
   readonly _handler = async(req: ExpressRequest, res: ExpressResponse) => {
     const allCtx = { ...req.ctx as CTX, req, res }
     try {
       const data = await this.handler(allCtx)
-      const results = await this.transformer(data, allCtx)
+      const results = await this.transformer?.(data, allCtx) || defaultTransformer(data, allCtx)
       res.locals.body = results
       await (this.action || defaultAction)(results, allCtx)
     } catch(err) {
@@ -31,11 +31,7 @@ export class NanaController<CTX extends BaseCTX = BaseCTX, Result = any, Data = 
     }
   }
 
-  constructor(
-    handler: NanaControllerHandler<CTX, Result>,
-    transformer: NanaTransformer<CTX, Result, Data> = defaultTransformer,
-  ) {
+  constructor(handler: NanaControllerHandler<CTX, Result>) {
     this.handler = handler
-    this.transformer = transformer
   }
 }
