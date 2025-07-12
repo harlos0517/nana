@@ -52,7 +52,7 @@ describe('NanaMiddleware', () => {
       () => { throw new NanaError(500, 'Test Error') },
       dummyErrorHandler,
     ))
-    server.get('/error', () => { throw new Error('Test Error') })
+    server.get('/error', () => ({ error: 'This should not be reached' }))
 
     await testNana(server, GET, '/error', 500, { error: 'Test Error' })
     expect(dummyErrorHandler).toBeCalledTimes(1)

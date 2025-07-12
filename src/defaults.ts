@@ -2,8 +2,7 @@
 import { NanaError } from '@/NanaError'
 import { NanaAction, NanaErrorHandler, NanaTransformer, Obj } from './types'
 
-export const NODE_ENV = process.env.NODE_ENV
-export const DEV = process.env.NODE_ENV !== 'production'
+const DEV = process.env.NODE_ENV !== 'production'
 
 export const defaultAction: NanaAction<Obj> =
   (data, { res }) => { res.status(200).send(data) }

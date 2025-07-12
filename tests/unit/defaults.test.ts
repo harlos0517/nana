@@ -2,8 +2,7 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import { defaultAction, defaultTransformer } from '@/defaults'
-import { BaseCTX } from '@/types'
-import { testCtx, testData } from '~/tests/util'
+import { testData } from '~/tests/util'
 
 describe('defaults', () => {
   it('defaultAction', async() => {
@@ -12,13 +11,13 @@ describe('defaults', () => {
       send: vi.fn(),
     }
 
-    defaultAction(testData, { res: dummyRes as any } as BaseCTX)
+    defaultAction(testData, { res: dummyRes as any } as any)
     expect(dummyRes.status).toBeCalledWith(200)
     expect(dummyRes.send).toBeCalledWith(testData)
   })
 
   it('defaultTransformer', async() => {
-    const transformedData = defaultTransformer(testData, testCtx)
+    const transformedData = defaultTransformer(testData, {} as any)
     expect(transformedData).toEqual(testData)
   })
 
@@ -32,7 +31,7 @@ describe('defaults', () => {
       vi.stubEnv('NODE_ENV', env)
       vi.resetModules()
 
-      const { defaultErrorHandler, NODE_ENV } = await import('@/defaults')
+      const { defaultErrorHandler } = await import('@/defaults')
       const { NanaError } = await import('@/NanaError')
 
       const error = errorType === 'NanaError' ? new NanaError(418, 'I\'m a teapot') :
@@ -44,7 +43,7 @@ describe('defaults', () => {
       }
 
       const errorLogger = vi.fn()
-      await defaultErrorHandler(error, { res: dummyRes as any } as BaseCTX, errorLogger)
+      await defaultErrorHandler(error, { res: dummyRes as any } as any, errorLogger)
       expect(dummyRes.status).toBeCalledWith(expectedStatus)
       expect(dummyRes.send).toBeCalledWith({ error: expectedMessage })
       expect(errorLogger).toBeCalledWith(error)
@@ -86,7 +85,7 @@ describe('defaults', () => {
       }
 
       const errorLogger = vi.fn()
-      defaultErrorHandler(new Error(), { res: dummyRes as any } as BaseCTX, errorLogger)
+      defaultErrorHandler(new Error(), { res: dummyRes as any } as any, errorLogger)
       expect(errorLogger).toBeCalledWith(sendError)
     })
   })

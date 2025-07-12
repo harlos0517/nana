@@ -12,6 +12,7 @@ import {
   NanaTransformer,
   Obj,
 } from '@/types'
+import { createContextArgument } from '@/util'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class NanaController<CTX extends Obj = Empty, Result = any, Data = Result> {
@@ -21,12 +22,13 @@ export class NanaController<CTX extends Obj = Empty, Result = any, Data = Result
   public transformer?: NanaTransformer<CTX, Result, Data>
 
   readonly _handler = async(req: ExpressRequest, res: ExpressResponse) => {
-    const allCtx = { ...req.ctx as CTX, req, res }
+    const allCtx = createContextArgument<CTX>(req.ctx as CTX, req, res)
     try {
-      const data = await this.handler(allCtx)
-      const results = await this.transformer?.(data, allCtx) || defaultTransformer(data, allCtx)
-      res.locals.body = results
-      await (this.action || defaultAction)(results, allCtx)
+      const result: Result = await this.handler(allCtx)
+      const data: Data =
+        await this.transformer?.(result, allCtx) || defaultTransformer(result, allCtx)
+      res.locals.body = data
+      await (this.action || defaultAction)(data, allCtx)
     } catch(err) {
       await (this.errorHandler || defaultErrorHandler)(err, allCtx)
     }

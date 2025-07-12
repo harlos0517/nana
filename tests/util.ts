@@ -3,8 +3,7 @@ import request from 'supertest'
 import { expect, vi } from 'vitest'
 
 import { NanaServer } from '@/NanaServer'
-import { BaseCTX, METHOD } from '@/types'
-import { Request, Response } from 'express'
+import { METHOD } from '@/types'
 
 export const dryRun = (app: NanaServer) => new Promise<void>(resolve => {
   let server: any = null
@@ -31,5 +30,4 @@ export const testNana = async(
 }
 
 export const testData = { message: 'Hello World' } as any
-export const testCtx =
-  { foo: 'bar', req: {} as Request, res: {} as Response } as { foo: string } & BaseCTX
+export const testCtx = { foo: 'bar' }

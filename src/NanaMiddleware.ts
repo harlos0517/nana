@@ -14,6 +14,7 @@ import {
   NanaPostHandler,
   Obj,
 } from '@/types'
+import { createContextArgument } from '@/util'
 
 export class NanaMiddleware<
   NewCTX extends Obj = Empty,
@@ -30,12 +31,12 @@ export class NanaMiddleware<
     next: ExpressNext,
   ) => {
     try {
-      const newCtx = await this.getContext({ ...req.ctx as _ParentCTX, req, res })
-      Object.assign(req.ctx, newCtx)
+      const newCtx = await this.getContext(createContextArgument(req.ctx as _ParentCTX, req, res))
+      Object.assign(req.ctx, newCtx || {})
       next()
-      this.postHandler?.({ ...req.ctx as _CTX, req, res })
+      this.postHandler?.(createContextArgument(req.ctx as _CTX, req, res))
     } catch(err) {
-      await this.errorHandler(err, { ...req.ctx as _CTX, req, res })
+      await this.errorHandler(err, createContextArgument(req.ctx as _CTX, req, res))
     }
   }
 
