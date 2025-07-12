@@ -19,7 +19,7 @@ export const dryRun = (app: NanaServer) => new Promise<void>(resolve => {
 })
 
 export const testNana = async(
-  app: NanaServer,
+  app: NanaServer<any>,
   method: METHOD,
   route: string,
   status: number,
@@ -31,5 +31,6 @@ export const testNana = async(
 }
 
 export const testData = { message: 'Hello World' } as any
-export const testCtx = { foo: 'bar', req: {} as Request, res: {} as Response } as any & BaseCTX
+export const testCtx =
+  { foo: 'bar', req: {} as Request, res: {} as Response } as { foo: string } & BaseCTX
 export const testARgs = [testData, testCtx] as const

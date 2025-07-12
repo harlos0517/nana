@@ -33,7 +33,7 @@ describe('NanaMiddleware', () => {
 
   it('should handle', async() => {
     const dummyPostHandler = vi.fn()
-    const server = new NanaServer()
+    const server = new NanaServer<{ foo: string }>()
     server.use(new NanaMiddleware(
       () => (testCtx),
       undefined,

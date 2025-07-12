@@ -21,7 +21,15 @@ export class NanaServer<CTX extends Obj = Empty, Data = any> extends NanaRouter<
     this.port = config?.port || 7777
     this.onStart = config?.onStart
     this.expressApp = express()
-    this.expressApp.use((req, _, next) => { req.ctx = {}; next() }) // Initialize context
+    this.expressApp.use((req, res, next) => {
+      // eslint-disable-next-line no-unused-vars
+      const { ctx: _, ...request } = req
+      req.ctx = {
+        req: request,
+        res,
+      }
+      next()
+    }) // Initialize context
     this.expressApp.use('/', this.expressRouter)
   }
 

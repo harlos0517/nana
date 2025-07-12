@@ -27,16 +27,16 @@ export class NanaMiddleware<
 
   readonly handler = async(
     req: ExpressRequest,
-    res: ExpressResponse,
+    _: ExpressResponse,
     next: ExpressNext,
   ) => {
     try {
-      const newCtx = await this.getContext({ ...req.ctx as _ParentCTX, req, res })
+      const newCtx = await this.getContext({ ...req.ctx as _ParentCTX })
       Object.assign(req.ctx, newCtx)
       next()
-      this.postHandler?.({ ...req.ctx as _CTX, req, res })
+      this.postHandler?.({ ...req.ctx as _CTX })
     } catch(err) {
-      await this.errorHandler(err, { ...req.ctx as _CTX, req, res })
+      await this.errorHandler(err, { ...req.ctx as _CTX })
     }
   }
 
