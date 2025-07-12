@@ -33,4 +33,3 @@ export const testNana = async(
 export const testData = { message: 'Hello World' } as any
 export const testCtx =
   { foo: 'bar', req: {} as Request, res: {} as Response } as { foo: string } & BaseCTX
-export const testARgs = [testData, testCtx] as const
