@@ -3,9 +3,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router as ExpressRouter } from 'express'
 
-import { defaultAction, defaultErrorHandler, defaultTransformer } from '@/defaults'
-import { NanaController } from '@/NanaController'
-import { NanaMiddleware } from '@/NanaMiddleware'
+import { defaultAction, defaultErrorHandler, defaultTransformer } from './defaults'
+import { NanaController } from './NanaController'
+import { NanaMiddleware } from './NanaMiddleware'
 import {
   CTXArgument,
   Empty,
@@ -15,8 +15,8 @@ import {
   NanaErrorHandler,
   NanaTransformer,
   Obj,
-} from '@/types'
-import { routeChecker } from '@/util'
+} from './types'
+import { routeChecker } from './util'
 
 export class NanaRouter<
   NewCTX extends Obj = Empty,

@@ -3,7 +3,7 @@ import {
   Response as ExpressResponse,
 } from 'express'
 
-import { defaultAction, defaultErrorHandler, defaultTransformer } from '@/defaults'
+import { defaultAction, defaultErrorHandler, defaultTransformer } from './defaults'
 import {
   Empty,
   NanaAction,
@@ -11,8 +11,8 @@ import {
   NanaErrorHandler,
   NanaTransformer,
   Obj,
-} from '@/types'
-import { createContextArgument } from '@/util'
+} from './types'
+import { createContextArgument } from './util'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class NanaController<CTX extends Obj = Empty, Result = any, Data = Result> {

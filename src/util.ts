@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { CTXArgument, Empty, Obj } from '@/types'
 import { Request, Response } from 'express'
+import { CTXArgument, Empty, Obj } from './types'
 
 export const routeChecker = (route: string): string => {
   const invalidRouteNameMessage =

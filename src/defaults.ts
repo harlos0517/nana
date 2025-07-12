@@ -1,5 +1,5 @@
 
-import { NanaError } from '@/NanaError'
+import { NanaError } from './NanaError'
 import { NanaAction, NanaErrorHandler, NanaTransformer, Obj } from './types'
 
 const DEV = process.env.NODE_ENV !== 'production'

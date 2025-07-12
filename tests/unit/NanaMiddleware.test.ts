@@ -45,6 +45,20 @@ describe('NanaMiddleware', () => {
     expect(dummyPostHandler).toBeCalledTimes(1)
   })
 
+  it('should handle with no new context', async() => {
+    const dummyPostHandler = vi.fn()
+    const server = new NanaServer<{ foo: string }>()
+    server.use(new NanaMiddleware(
+      () => {},
+      undefined,
+      dummyPostHandler,
+    ))
+    server.get('/user', () => ({ user: 'bar' }))
+
+    await testNana(server, GET, '/user', 200, { user: 'bar' })
+    expect(dummyPostHandler).toBeCalledTimes(1)
+  })
+
   it('should handle error', async() => {
     const dummyErrorHandler = vi.fn(defaultErrorHandler)
     const server = new NanaServer()

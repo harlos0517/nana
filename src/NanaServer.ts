@@ -2,9 +2,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import express, { Application as ExpressApp } from 'express'
 
-import { defaultAction, defaultErrorHandler, defaultTransformer } from '@/defaults'
-import { NanaRouter } from '@/NanaRouter'
-import { Empty, Obj } from '@/types'
+import { defaultAction, defaultErrorHandler, defaultTransformer } from './defaults'
+import { NanaRouter } from './NanaRouter'
+import { Empty, Obj } from './types'
 
 
 export class NanaServer<CTX extends Obj = Empty, Data = any> extends NanaRouter<CTX, Data> {

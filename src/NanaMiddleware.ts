@@ -6,15 +6,15 @@ import {
   Response as ExpressResponse,
 } from 'express'
 
-import { defaultErrorHandler } from '@/defaults'
+import { defaultErrorHandler } from './defaults'
 import {
   Empty,
   NanaErrorHandler,
   NanaMiddlewareCreateContext,
   NanaPostHandler,
   Obj,
-} from '@/types'
-import { createContextArgument } from '@/util'
+} from './types'
+import { createContextArgument } from './util'
 
 export class NanaMiddleware<
   NewCTX extends Obj = Empty,
