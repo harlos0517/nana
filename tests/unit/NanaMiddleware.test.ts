@@ -26,7 +26,7 @@ describe('NanaMiddleware', () => {
   it('should construct with no arguments and run', async() => {
     const server = new NanaServer()
     server.use(new NanaMiddleware())
-    server.get('/test', () => (testData))
+    server.get('/test', () => testData)
 
     await testNana(server, GET, '/test', 200, testData)
   })
@@ -35,7 +35,7 @@ describe('NanaMiddleware', () => {
     const dummyPostHandler = vi.fn()
     const server = new NanaServer<{ foo: string }>()
     server.use(new NanaMiddleware(
-      () => (testCtx),
+      () => testCtx,
       undefined,
       dummyPostHandler,
     ))

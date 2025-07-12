@@ -1,16 +1,16 @@
 
 import { NanaError } from '@/NanaError'
-import { BaseCTX, NanaAction, NanaErrorHandler, NanaTransformer } from './types'
+import { NanaAction, NanaErrorHandler, NanaTransformer, Obj } from './types'
 
 export const NODE_ENV = process.env.NODE_ENV
 export const DEV = process.env.NODE_ENV !== 'production'
 
-export const defaultAction: NanaAction<BaseCTX> =
+export const defaultAction: NanaAction<Obj> =
   (data, { res }) => { res.status(200).send(data) }
 
-export const defaultTransformer: NanaTransformer<BaseCTX> = data => data
+export const defaultTransformer: NanaTransformer<Obj> = data => data
 
-export const defaultErrorHandler: NanaErrorHandler<BaseCTX> =
+export const defaultErrorHandler: NanaErrorHandler<Obj> =
   (err, { res }, errorLogger = console.error) => {
     errorLogger(err)
     try {

@@ -30,33 +30,33 @@ export const PATCH = METHOD.PATCH
 export const OPTIONS = METHOD.OPTIONS
 export const HEAD = METHOD.HEAD
 
-export type NanaMiddlewareCreateContext<NewCTX extends Obj = Empty, _ParentCTX extends BaseCTX = BaseCTX> = (
+export type NanaMiddlewareCreateContext<NewCTX extends Obj = Empty, _ParentCTX extends Obj = Empty> = (
   _ctx: _ParentCTX & BaseCTX
 ) => Promisable<NewCTX>
 
-export type NanaPostHandler<CTX extends BaseCTX = BaseCTX> = (
+export type NanaPostHandler<CTX extends Obj = Empty> = (
   _ctx: CTX & BaseCTX
 ) => Promisable<void>
 
-export type NanaControllerHandler<CTX extends BaseCTX = BaseCTX, Data = any> = (
+export type NanaControllerHandler<CTX extends Obj = Empty, Data = any> = (
   _ctx: CTX & BaseCTX
 ) => Promisable<Data>
 
-export type NanaAction<CTX extends BaseCTX = BaseCTX, Data = any> = (
+export type NanaAction<CTX extends Obj = Empty, Data = any> = (
   data: Data,
   _ctx: CTX & BaseCTX
 ) => Promisable<void>
 
-export type NanaTransformer<CTX extends BaseCTX = BaseCTX, SourceData = any, TargetData = any> = (
+export type NanaTransformer<CTX extends Obj = Empty, SourceData = any, TargetData = any> = (
   data: SourceData,
   _ctx: CTX & { req: Request, res: Response }
 ) => Promisable<TargetData>
 
-export type NanaErrorHandler<CTX extends BaseCTX = BaseCTX> = (
+export type NanaErrorHandler<CTX extends Obj = Empty> = (
   _err: unknown,
   _ctx: CTX & BaseCTX,
   _errorLogger?: (_err: unknown) => void
 ) => Promisable<void>
 
-export type ControllerArgs<CTX extends BaseCTX = BaseCTX, Data = any> =
+export type ControllerArgs<CTX extends Obj = Empty, Data = any> =
   [route: string, handler: NanaControllerHandler<CTX, Data>]

@@ -5,15 +5,16 @@ import {
 
 import { defaultAction, defaultErrorHandler, defaultTransformer } from '@/defaults'
 import {
-  BaseCTX,
+  Empty,
   NanaAction,
   NanaControllerHandler,
   NanaErrorHandler,
   NanaTransformer,
+  Obj,
 } from '@/types'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export class NanaController<CTX extends BaseCTX = BaseCTX, Result = any, Data = Result> {
+export class NanaController<CTX extends Obj = Empty, Result = any, Data = Result> {
   public handler: NanaControllerHandler<CTX, Result>
   public action?: NanaAction<CTX, Data>
   public errorHandler?: NanaErrorHandler<CTX>

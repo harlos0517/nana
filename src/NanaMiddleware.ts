@@ -8,7 +8,6 @@ import {
 
 import { defaultErrorHandler } from '@/defaults'
 import {
-  BaseCTX,
   Empty,
   NanaErrorHandler,
   NanaMiddlewareCreateContext,
@@ -18,7 +17,7 @@ import {
 
 export class NanaMiddleware<
   NewCTX extends Obj = Empty,
-  _ParentCTX extends BaseCTX = BaseCTX,
+  _ParentCTX extends Obj = Empty,
   _CTX extends NewCTX & _ParentCTX = NewCTX & _ParentCTX,
 > {
   public readonly getContext: NanaMiddlewareCreateContext<NewCTX, _ParentCTX>
@@ -27,16 +26,16 @@ export class NanaMiddleware<
 
   readonly handler = async(
     req: ExpressRequest,
-    _: ExpressResponse,
+    res: ExpressResponse,
     next: ExpressNext,
   ) => {
     try {
-      const newCtx = await this.getContext({ ...req.ctx as _ParentCTX })
+      const newCtx = await this.getContext({ ...req.ctx as _ParentCTX, req, res })
       Object.assign(req.ctx, newCtx)
       next()
-      this.postHandler?.({ ...req.ctx as _CTX })
+      this.postHandler?.({ ...req.ctx as _CTX, req, res })
     } catch(err) {
-      await this.errorHandler(err, { ...req.ctx as _CTX })
+      await this.errorHandler(err, { ...req.ctx as _CTX, req, res })
     }
   }
 

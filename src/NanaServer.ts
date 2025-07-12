@@ -1,13 +1,13 @@
-/* eslint-disable @stylistic/max-len */
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import express, { Application as ExpressApp } from 'express'
 
 import { defaultAction, defaultErrorHandler, defaultTransformer } from '@/defaults'
 import { NanaRouter } from '@/NanaRouter'
-import { BaseCTX, Empty, Obj } from '@/types'
+import { Empty, Obj } from '@/types'
 
 
-export class NanaServer<CTX extends Obj = Empty, Data = any> extends NanaRouter<CTX & BaseCTX, Data> {
+export class NanaServer<CTX extends Obj = Empty, Data = any> extends NanaRouter<CTX, Data> {
   public readonly expressApp: ExpressApp
   public readonly port: number
   public onStart?: () => void
@@ -21,22 +21,14 @@ export class NanaServer<CTX extends Obj = Empty, Data = any> extends NanaRouter<
     this.port = config?.port || 7777
     this.onStart = config?.onStart
     this.expressApp = express()
-    this.expressApp.use((req, res, next) => {
-      // eslint-disable-next-line no-unused-vars
-      const { ctx: _, ...request } = req
-      req.ctx = {
-        req: request,
-        res,
-      }
+    this.expressApp.use((req, _, next) => {
+      req.ctx = {}
       next()
     }) // Initialize context
     this.expressApp.use('/', this.expressRouter)
   }
 
   run() {
-    return this.expressApp.listen(this.port, () => {
-      console.log(`Server is running on port ${this.port}`)
-      this.onStart?.()
-    })
+    return this.expressApp.listen(this.port, this.onStart)
   }
 }

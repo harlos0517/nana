@@ -21,7 +21,7 @@ import { routeChecker } from '@/util'
 export class NanaRouter<
   NewCTX extends Obj = Empty,
   Data = any,
-  _ParentCTX extends BaseCTX = BaseCTX,
+  _ParentCTX extends Obj = Empty,
   _ParentData = Data,
   __CTX extends _ParentCTX & NewCTX = _ParentCTX & NewCTX,
 > {
@@ -32,7 +32,7 @@ export class NanaRouter<
   public errorHandler?: NanaErrorHandler<__CTX>
   public readonly children: Record<string, NanaRouter<any, any, __CTX, Data, any> | NanaController<__CTX, any, Data> | ExpressRouter> = {}
 
-  readonly _transformer: NanaTransformer<__CTX, Data> = async<Result = any>(data: Result, ctx: __CTX) =>
+  readonly _transformer: NanaTransformer<__CTX, Data> = async<Result = any>(data: Result, ctx: __CTX & BaseCTX) =>
     this.parent instanceof NanaRouter
       ? this.transformer(await this.parent._transformer(data as any, ctx), ctx)
       : this.transformer(data as any, ctx)
@@ -91,7 +91,7 @@ export class NanaRouter<
       ? handler : new NanaController<__CTX, Result, Data>(handler)
     controller.action ||= this.action || defaultAction
     controller.errorHandler ||= this.errorHandler || defaultErrorHandler
-    controller.transformer = (data: Result, ctx: __CTX) => this._transformer(data as any, ctx)
+    controller.transformer = (data, ctx) => this._transformer(data as any, ctx)
     this.children[route] = controller
     this.expressRouter[method](route, controller._handler)
     return controller

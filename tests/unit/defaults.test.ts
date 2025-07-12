@@ -44,7 +44,6 @@ describe('defaults', () => {
       }
 
       const errorLogger = vi.fn()
-      console.log(env, process.env.NODE_ENV, NODE_ENV)
       await defaultErrorHandler(error, { res: dummyRes as any } as BaseCTX, errorLogger)
       expect(dummyRes.status).toBeCalledWith(expectedStatus)
       expect(dummyRes.send).toBeCalledWith({ error: expectedMessage })
